@@ -6,122 +6,117 @@ var parseJSON = function(json) {
   // your code goes here
   console.log('===== PARSING =====');
   console.log('json: ' + json);
-  var remainder = json;
+  var remainder = new Partial(json);
 
-  // identify type and parse next value of JSON string
-  function parseValue() {
-    var result;
-    var next = remainder.slice(0, 1);
-    var elem;
-    if (next === '[') {
-      console.log('> ARRAY DETECTED <');
-      parseNext();
-      elem = parseElem([']']);
-      result = parseArray(elem);
-    } else if (next === '{') {
-      parseNext();
-      console.log('> OBJECT DETECTED <');
-      parseNext();
-      elem = parseElem([']']);
-      result = parseObject(elem);
-    } else if (next === '"') {
-      console.log('> STRING DETECTED <');
-      parseNext();
-      elem = parseElem(['"']);
-      result = parseString(elem);
-    } else if (next === 't') {
-      console.log('> TRUE DETECTED <');
-      elem = parseElem([]);
-      result = parseTrue(elem);
-    } else if (next === 'f') {
-      console.log('> FALSE DETECTED <');
-      elem = parseElem([]);
-      result = parseFalse(elem);
-    } else if (next === 'n') {
-      console.log('> NULL DETECTED <');
-      elem = parseElem([]);
-      result = parseNull(elem);
-    } else {
-      console.log('> NUMBER DETECTED <');
-      elem = parseElem([]);
-      result = parseNumber(elem);
+  // mutable JSON string
+  function Partial(string) {
+    this.string = string;
+    // print string to console
+    this.log = function() {
+      console.log("partial: " + this.string);
     }
-    return result;
+    // return first char
+    this.first = function() {
+      return this.string.slice(0, 1);
+    };
+    // remove and return first char
+    this.next = function() {
+      var result = this.string.slice(0, 1);
+      this.string = this.string.slice(1);
+      return result;
+    };
+    // remove and return next element by any value in given array
+    this.nextElem = function(delimArray) {
+      var elem = '';
+      var next = this.next();
+      while(next !== '' && delimArray.indexOf(next) === -1)  {
+        elem = elem + next;
+        next = this.next();
+      }
+      return elem;
+    };
   }
 
-  // parse next element delimited by any value in given array
-  function parseElem(delimArray) {
-    var elem = '';
-    var next = parseNext();
-    while(next !== '' && delimArray.indexOf(next) === -1)  {
-      elem = elem + next;
-      next = parseNext();
+  // identify type and parse next value of JSON string
+  function parseValue(partial) {
+    var result;
+    if (partial.first() === '[') {
+      result = parseArray(partial);
+    } else if (partial.first() === '{') {
+      result = parseObject(partial);
+    } else if (partial.first() === '"') {
+      result = parseString(partial);
+    } else if (partial.first() === 't') {
+      result = parseTrue(partial);
+    } else if (partial.first() === 'f') {
+      result = parseFalse(partial);
+    } else if (partial.first() === 'n') {
+      result = parseNull(partial);
+    } else {
+      result = parseNumber(partial);
     }
-    return elem;
+    return result;
   }
 
   // parse array
-  function parseArray(arrayStr) {
-    var result = [];
-    console.log("array str: " + arrayStr);
-    return result;
+  function parseArray(partial) {
+    console.log(">>> PARSING ARRAY <<<");
+    return undefined;
   }
 
   // parse object
-  function parseObject() {
-    var result = {};
-    while (remainder.length > 0 && next !== '}') {
-    }
-    return result;
+  function parseObject(partial) {
+    console.log(">>> PARSING OBJECT <<<");
+    return undefined;
   }
 
   // parse string
-  function parseString(elem) {
+  function parseString(partial) {
+    console.log(">>> PARSING STRING <<<");
+    partial.next();
+    var elem = partial.nextElem(['"']);
     return elem;
   }
 
   // parse true
-  function parseTrue(elem) {
+  function parseTrue(partial) {
     console.log(">>> PARSING TRUE <<<");
     var result = undefined;
-    if (elem.slice(0, 4) === 'true') {
+    var elem = partial.nextElem([]);
+    if (elem === 'true') {
       result = true;
     }
     return result;
   }
 
   // parse false
-  function parseFalse(elem) {
+  function parseFalse(partial) {
     console.log(">>> PARSING FALSE <<<");
     var result = undefined;
-    if (elem.slice(0, 5) === 'false') {
+    var elem = partial.nextElem([]);
+    if (elem === 'false') {
       result = false;
     }
     return result;
   }
 
-  // parse null
-  function parseNull(elem) {
+  // parse true
+  function parseNull(partial) {
     console.log(">>> PARSING NULL <<<");
     var result = undefined;
-    if (elem.slice(0, 4) === 'null') {
+    var elem = partial.nextElem([]);
+    if (elem === 'null') {
       result = null;
     }
     return result;
   }
 
   // parse number
-  function parseNumber(elem) {
+  function parseNumber(partial) {
     console.log(">>> PARSING NUMBER <<<");
+    var elem = partial.nextElem([]);
     return +elem;
   }
 
-  // parse next char
-  function parseNext() {
-    var next = remainder.slice(0, 1);
-    remainder = remainder.slice(1);
-    return next;
-  }
-
-  return parseValue();
+  return parseValue(remainder);
 }
