@@ -12,99 +12,108 @@ var parseJSON = function(json) {
   function parseValue() {
     var result;
     var next = remainder.slice(0, 1);
-    console.log('next: ' + next);
-
+    var elem;
     if (next === '[') {
       console.log('> ARRAY DETECTED <');
-      result = parseArray();
+      parseNext();
+      elem = parseElem([']']);
+      result = parseArray(elem);
     } else if (next === '{') {
+      parseNext();
       console.log('> OBJECT DETECTED <');
-      result = parseObject();
+      parseNext();
+      elem = parseElem([']']);
+      result = parseObject(elem);
     } else if (next === '"') {
       console.log('> STRING DETECTED <');
-      result = parseString();
+      parseNext();
+      elem = parseElem(['"']);
+      result = parseString(elem);
     } else if (next === 't') {
       console.log('> TRUE DETECTED <');
-      result = parseTrue();
+      elem = parseElem([]);
+      result = parseTrue(elem);
     } else if (next === 'f') {
       console.log('> FALSE DETECTED <');
-      result = parseFalse();
+      elem = parseElem([]);
+      result = parseFalse(elem);
     } else if (next === 'n') {
       console.log('> NULL DETECTED <');
-      result = parseNull();
+      elem = parseElem([]);
+      result = parseNull(elem);
     } else {
       console.log('> NUMBER DETECTED <');
-      result = parseNumber();
+      elem = parseElem([]);
+      result = parseNumber(elem);
     }
-
     return result;
   }
 
-  // parse array
-  function parseArray() {
-    var result = [];
-    setNext();
-    while (remainder.length > 0 && next !== ']') {
-      result.push(parseValue());
+  // parse next element delimited by any value in given array
+  function parseElem(delimArray) {
+    var elem = '';
+    var next = parseNext();
+    while(next !== '' && delimArray.indexOf(next) === -1)  {
+      elem = elem + next;
+      next = parseNext();
     }
+    return elem;
+  }
+
+  // parse array
+  function parseArray(arrayStr) {
+    var result = [];
+    console.log("array str: " + arrayStr);
     return result;
   }
 
   // parse object
   function parseObject() {
     var result = {};
-    setNext();
     while (remainder.length > 0 && next !== '}') {
     }
     return result;
   }
 
   // parse string
-  function parseString() {
-    var result = '';
-    return result;
+  function parseString(elem) {
+    return elem;
   }
 
   // parse true
-  function parseTrue() {
+  function parseTrue(elem) {
+    console.log(">>> PARSING TRUE <<<");
     var result = undefined;
-    if (remainder.slice(0, 4) === 'true') {
-      remainder = remainder.slice(4);
+    if (elem.slice(0, 4) === 'true') {
       result = true;
     }
     return result;
   }
 
   // parse false
-  function parseFalse() {
+  function parseFalse(elem) {
+    console.log(">>> PARSING FALSE <<<");
     var result = undefined;
-    if (remainder.slice(0, 5) === 'false') {
-      remainder = remainder.slice(5);
+    if (elem.slice(0, 5) === 'false') {
       result = false;
     }
     return result;
   }
 
   // parse null
-  function parseNull() {
+  function parseNull(elem) {
+    console.log(">>> PARSING NULL <<<");
     var result = undefined;
-    if (remainder.slice(0, 4) === 'null') {
-      remainder = remainder.slice(4);
+    if (elem.slice(0, 4) === 'null') {
       result = null;
     }
     return result;
   }
 
   // parse number
-  function parseNumber() {
+  function parseNumber(elem) {
     console.log(">>> PARSING NUMBER <<<");
-    var result = "";
-    var next = parseNext();
-    while (next !== "") {
-      result = result + next;
-      next = parseNext();
-    }
-    return +result;
+    return +elem;
   }
 
   // parse next char
@@ -112,101 +121,6 @@ var parseJSON = function(json) {
     var next = remainder.slice(0, 1);
     remainder = remainder.slice(1);
     return next;
-  }
-
-  // parse string
-  function parseString2() {
-    var result = '';
-    setNext();
-    while (remainder.length > 0 && next !== '"') {
-      result = result + next;
-      setNext();
-    }
-    console.log('string return: ' + result);
-    return result;
-  }
-
-  // parse number
-  function parseNumber2() {
-    var result = next;
-    while (remainder.length > 0) {
-      setNext();
-      result = result + next;
-    }
-    return +result;
-  }
-
-  // parse next char of JSON string
-  function setNext2() {
-    next = remainder.slice(0, 1);
-    remainder = remainder.slice(1);
-    console.log('set next: ' + next);
-    console.log('set remainder: ' + remainder);
-  }
-
-  // parse next value of JSON string
-  function parseValue2() {
-    var result;
-
-    // parse next value
-    while (remainder.length > 0) {
-      setNext();
-      console.log('next: ' + next);
-      if (next === '{') {
-        console.log('> OBJECT DETECTED <');
-        result = {};
-      } else if (next === '[') {
-        console.log('> ARRAY DETECTED <');
-        result = parseArray();
-
-        console.log('pre remainder: ' + remainder);
-        var testVal = parseJSON(remainder);
-        console.log('testval: ' + testVal);
-        console.log('post remainder: ' + remainder);
-
-      } else if (next === '"') {
-        console.log('> STRING DETECTED <');
-        result = parseString();
-      } else {
-        console.log('> VALUE DETECTED <');
-        if (next === 't') {
-          console.log('> POSSIBLE TRUE DETECTED <');
-          var checkStr = remainder.slice(0, 3);
-          remainder = remainder.slice(3);
-          if (checkStr === 'rue') {
-            result = true;
-          }
-        } else if (next === 'f') {
-          console.log('> POSSIBLE FALSE DETECTED <');
-          var checkStr = remainder.slice(0, 4);
-          remainder = remainder.slice(4);
-          if (checkStr === 'alse') {
-            result = false;
-          }
-        } else if (next === 'n') {
-          console.log('> POSSIBLE NULL DETECTED <');
-          var checkStr = remainder.slice(0, 3);
-          remainder = remainder.slice(3);
-          if (checkStr === 'ull') {
-            result = null;
-          }
-        } else {
-          console.log('> NUMBER DETECTED <');
-/*
-          result = result === undefined ? next : result + next;
-          result = next;
-          while (remainder.length > 0) {
-            setNext();
-            result = result + next;
-          }
-          result = +result;
-*/
-          result = parseNumber();
-        }
-      }
-    }
-
-    return result;
   }
 
   return parseValue();
