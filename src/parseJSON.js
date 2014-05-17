@@ -19,6 +19,10 @@ var parseJSON = function(json) {
     this.first = function() {
       return this.string.slice(0, 1);
     };
+    // return last char
+    this.last = function() {
+      return this.string.slice(-1);
+    }
     // remove and return first char
     this.next = function() {
       var result = this.string.slice(0, 1);
@@ -35,11 +39,17 @@ var parseJSON = function(json) {
       }
       return elem;
     };
+    // remove leading whitespace
+    this.strip = function() {
+      while (this.first() === ' ') this.next();
+      while (this.last() === ' ') this.string = this.string.slice(0, -1);
+    }
   }
 
   // identify type and parse next value of JSON string
   function parseValue(partial) {
     var result;
+    partial.strip();
     if (partial.first() === '[') {
       result = parseArray(partial);
     } else if (partial.first() === '{') {
@@ -61,13 +71,35 @@ var parseJSON = function(json) {
   // parse array
   function parseArray(partial) {
     console.log(">>> PARSING ARRAY <<<");
-    return undefined;
+    var result = [];
+    partial.next();
+    var contents = new Partial(partial.nextElem([']']));
+    var elem = contents.nextElem([',']);
+    while (elem !== '') {
+      result.push(parseValue(new Partial(elem)));
+      elem = contents.nextElem([',']);
+    }
+    return result;
   }
 
   // parse object
   function parseObject(partial) {
     console.log(">>> PARSING OBJECT <<<");
-    return undefined;
+    var result = {};
+    partial.next();
+    var contents = new Partial(partial.nextElem(['}']));
+    var elem = contents.nextElem([',']);
+    while (elem !== '') {
+      var keyval = elem.split(':');
+      var key = new Partial(keyval[0]);
+      var val = new Partial(keyval[1]);
+      key.strip();
+      val.strip();
+      result[parseString(key)] = parseValue(val);
+      elem = contents.nextElem([',']);
+    }
+console.log("result: " + JSON.stringify(result));
+    return result;
   }
 
   // parse string
