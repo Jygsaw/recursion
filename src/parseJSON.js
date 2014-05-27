@@ -39,20 +39,22 @@ var parseJSON = function(json) {
     };
     // remove leading whitespace
     this.strip = function() {
-      while (this.first() === ' ') this.shift();
+      while (this.first() === ' ' || this.first() === ',' || this.first() === ':') this.shift();
     }
   }
 
   // identify type and parse next value of JSON string
   function parseValue(partial) {
+console.log(">>>>> PARSING VALUE <<<<<");
+partial.log();
     var result;
     partial.strip();
     if (partial.first() === '[') {
       console.log("===== ARRAY DETECTED =====");
-//      result = parseArray(partial);
+      result = parseArray(partial);
     } else if (partial.first() === '{') {
       console.log("===== OBJECT DETECTED =====");
-//      result = parseObject(partial);
+      result = parseObject(partial);
     } else if (partial.first() === '"') {
       console.log("===== STRING DETECTED =====");
       result = parseString(partial);
@@ -77,15 +79,33 @@ var parseJSON = function(json) {
     console.log(">>> PARSING ARRAY <<<");
     var result = [];
 partial.log();
-    partial.next();
+    partial.shift();
+partial.log();
+console.log("first: " + partial.first());
     while (partial.first() !== ']') {
-      if (partial.first() === ',') {
-        partial.next();
-        partial.strip();
-      }
-      result.push(parseValue(partial));
-      partial.log();
+console.log(">>> parsing array elem <<<")
+partial.log();
+var val = parseValue(partial);
+console.log("arrayval: " + val);
+      result.push(val);
+
+//      partial.strip();
+//      var elem = partial.shiftElem([' ', ',', ']', '}']);
+//console.log("array elem: " + elem);
+
+//      if (partial.first() === ',') {
+//        partial.next();
+//        partial.strip();
+//      }
+//      result.push(parseValue(partial));
+//      partial.log();
+//      partial.shift();
+partial.strip();
+partial.log();
     }
+partial.log();
+    partial.shift();
+partial.log();
     return result;
   }
 
@@ -93,7 +113,29 @@ partial.log();
   function parseObject(partial) {
     console.log(">>> PARSING OBJECT <<<");
     var result = {};
-    partial.next();
+    partial.log();
+    partial.shift();
+    partial.log();
+    while (partial.first() !== '}') {
+console.log(">>> parsing object pair <<<")
+partial.log();
+
+      var key = parseValue(partial);
+console.log("key: " + key);
+      var val = parseValue(partial);
+console.log("val: " + val);
+
+      result[key] = val;
+
+//partial.shift();
+partial.log();
+partial.strip();
+partial.log();
+    }
+    partial.log();
+    partial.shift();
+    partial.log();
+/*
     var contents = new Partial(partial.nextElem(['}']));
     var elem = contents.nextElem([',']);
     while (elem !== '') {
@@ -105,6 +147,7 @@ partial.log();
       result[parseString(key)] = parseValue(val);
       elem = contents.nextElem([',']);
     }
+*/
     return result;
   }
 
@@ -113,6 +156,7 @@ partial.log();
     console.log(">>> PARSING STRING <<<");
     partial.shift()
     var elem = partial.shiftElem(['"']);
+    partial.shift();
     return elem;
   }
 
