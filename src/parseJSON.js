@@ -5,7 +5,7 @@
 var parseJSON = function(json) {
   // your code goes here
   console.log('===== PARSING =====');
-  console.log('json: ' + json);
+  console.log('json: "' + json + '"');
   var remainder = new Partial(json);
 
   // mutable JSON string
@@ -24,25 +24,22 @@ var parseJSON = function(json) {
       return this.string.slice(-1);
     }
     // remove and return first char
-    this.next = function() {
+    this.shift = function() {
       var result = this.string.slice(0, 1);
       this.string = this.string.slice(1);
       return result;
     };
-    // remove and return next element by any value in given array
-    this.nextElem = function(delimArray) {
+    // remove and return next element delimited by any value in given array
+    this.shiftElem = function(delimArray) {
       var elem = '';
-      var next = this.next();
-      while(next !== '' && delimArray.indexOf(next) === -1)  {
-        elem = elem + next;
-        next = this.next();
+      while(this.first() !== '' && delimArray.indexOf(this.first()) === -1)  {
+        elem = elem + this.shift();
       }
       return elem;
     };
     // remove leading whitespace
     this.strip = function() {
-      while (this.first() === ' ') this.next();
-      while (this.last() === ' ') this.string = this.string.slice(0, -1);
+      while (this.first() === ' ') this.shift();
     }
   }
 
@@ -51,18 +48,25 @@ var parseJSON = function(json) {
     var result;
     partial.strip();
     if (partial.first() === '[') {
-      result = parseArray(partial);
+      console.log("===== ARRAY DETECTED =====");
+//      result = parseArray(partial);
     } else if (partial.first() === '{') {
-      result = parseObject(partial);
+      console.log("===== OBJECT DETECTED =====");
+//      result = parseObject(partial);
     } else if (partial.first() === '"') {
+      console.log("===== STRING DETECTED =====");
       result = parseString(partial);
     } else if (partial.first() === 't') {
+      console.log("===== TRUE DETECTED =====");
       result = parseTrue(partial);
     } else if (partial.first() === 'f') {
+      console.log("===== FALSE DETECTED =====");
       result = parseFalse(partial);
     } else if (partial.first() === 'n') {
+      console.log("===== NULL DETECTED =====");
       result = parseNull(partial);
     } else {
+      console.log("===== NUMBER DETECTED =====");
       result = parseNumber(partial);
     }
     return result;
@@ -72,12 +76,15 @@ var parseJSON = function(json) {
   function parseArray(partial) {
     console.log(">>> PARSING ARRAY <<<");
     var result = [];
+partial.log();
     partial.next();
-    var contents = new Partial(partial.nextElem([']']));
-    var elem = contents.nextElem([',']);
-    while (elem !== '') {
-      result.push(parseValue(new Partial(elem)));
-      elem = contents.nextElem([',']);
+    while (partial.first() !== ']') {
+      if (partial.first() === ',') {
+        partial.next();
+        partial.strip();
+      }
+      result.push(parseValue(partial));
+      partial.log();
     }
     return result;
   }
@@ -98,55 +105,51 @@ var parseJSON = function(json) {
       result[parseString(key)] = parseValue(val);
       elem = contents.nextElem([',']);
     }
-console.log("result: " + JSON.stringify(result));
     return result;
   }
 
   // parse string
   function parseString(partial) {
     console.log(">>> PARSING STRING <<<");
-    partial.next();
-    var elem = partial.nextElem(['"']);
+    partial.shift()
+    var elem = partial.shiftElem(['"']);
     return elem;
   }
 
   // parse true
   function parseTrue(partial) {
     console.log(">>> PARSING TRUE <<<");
-    var result = undefined;
-    var elem = partial.nextElem([]);
+    var elem = partial.shiftElem([' ', ',', ']', '}']);
     if (elem === 'true') {
-      result = true;
+      return true;
     }
-    return result;
+    return undefined;
   }
 
   // parse false
   function parseFalse(partial) {
     console.log(">>> PARSING FALSE <<<");
-    var result = undefined;
-    var elem = partial.nextElem([]);
+    var elem = partial.shiftElem([' ', ',', ']', '}']);
     if (elem === 'false') {
-      result = false;
+      return false;
     }
-    return result;
+    return undefined;
   }
 
   // parse true
   function parseNull(partial) {
     console.log(">>> PARSING NULL <<<");
-    var result = undefined;
-    var elem = partial.nextElem([]);
+    var elem = partial.shiftElem([' ', ',', ']', '}']);
     if (elem === 'null') {
-      result = null;
+      return null;
     }
-    return result;
+    return undefined;
   }
 
   // parse number
   function parseNumber(partial) {
     console.log(">>> PARSING NUMBER <<<");
-    var elem = partial.nextElem([]);
+    var elem = partial.shiftElem([' ', ',', ']', '}']);
     return +elem;
   }
 
