@@ -42,7 +42,7 @@ var parseJSON = function(json) {
     };
     // remove leading whitespace and separator tokens
     this.strip = function() {
-      while (this.first() <= ' ' || this.first() === ',' || this.first() === ':') this.shift();
+      while ((this.first() <= ' ' || this.first() === ',' || this.first() === ':') && this.first() !== '') this.shift();
     }
   }
 
@@ -72,32 +72,47 @@ var parseJSON = function(json) {
   function parseArray(partial) {
     var result = [];
     partial.shift();
-    while (partial.first() !== ']') {
+    while (partial.first() !== ']' && partial.first() !== '') {
       result.push(parseValue(partial));
       partial.strip();
     }
-    partial.shift();
-    return result;
+    if (partial.first() === ']') {
+      partial.shift();
+      return result;
+    } else {
+      // return undefined for malformed array
+      return undefined;
+    }
   }
 
   // parse object
   function parseObject(partial) {
     var result = {};
     partial.shift();
-    while (partial.first() !== '}') {
+    while (partial.first() !== '}' && partial.first() !== '') {
       result[parseValue(partial)] = parseValue(partial);
       partial.strip();
     }
-    partial.shift();
-    return result;
+    if (partial.first() === '}') {
+      partial.shift();
+      return result;
+    } else {
+      // return undefined for malformed object
+      return undefined;
+    }
   }
 
   // parse string
   function parseString(partial) {
     partial.shift()
     var elem = partial.shiftElem(['"']);
-    partial.shift();
-    return elem;
+    if (partial.first() === '"') {
+      partial.shift();
+      return elem;
+    } else {
+      // return undefined for malformed string
+      return undefined;
+    }
   }
 
   // parse true
